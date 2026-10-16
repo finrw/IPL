@@ -1,9 +1,9 @@
 // ================== APLIKASI IPL WARGA - app.js (versi fetch) ==================
 // GANTI dengan URL Web App Apps Script Anda (yang berakhiran /exec)
-var API_URL = "https://script.google.com/macros/s/GANTI_DENGAN_ID_DEPLOYMENT_ANDA/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbzEHUQ3sluP1X4I9eE6XBblGYBXsiwGRz_dDSX7Z0X9xRFughP9LD3Qyf_r_ynaNWNq/exec";
 
 // Nomor WhatsApp bendahara (format bebas: 0812... atau 62812...) - WAJIB DIGANTI
-var WA_BENDAHARA = "6285890056992";
+var WA_BENDAHARA = "085890056992";
 
 var BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli",
              "Agustus", "September", "Oktober", "November", "Desember"];
@@ -84,7 +84,7 @@ window.addEventListener("DOMContentLoaded", function () {
   isiPilihanTahun("riwayat-tahun");
   isiPilihanTahun("rekap-tahun");
 
-  if (API_URL.indexOf("https://script.google.com/macros/s/AKfycbzEHUQ3sluP1X4I9eE6XBblGYBXsiwGRz_dDSX7Z0X9xRFughP9LD3Qyf_r_ynaNWNq/exec") !== -1) {
+  if (API_URL.indexOf("GANTI_DENGAN") !== -1) {
     tampilkanError("⚠️ API_URL di app.js belum diisi dengan URL Web App Apps Script (/exec).");
   }
 });
@@ -781,5 +781,3 @@ function logout() {
   document.getElementById("login-pin").value = "";
   pindahKe("login");
 }
-
-
