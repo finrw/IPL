@@ -395,26 +395,84 @@ function hitungTotal() {
   document.getElementById("total-display").innerText = total.toLocaleString("id-ID");
 }
 
-// ---------- Kompres foto sebelum upload ----------
+// ---------- Kompres foto sebelum upload (cepat + tetap jelas + tahan di HP) ----------
 function kompresFoto(file, maxSisi, kualitas) {
   return new Promise(function (resolve, reject) {
-    var reader = new FileReader();
-    reader.onerror = function () { reject(new Error("Gagal membaca file foto.")); };
-    reader.onload = function (e) {
-      var img = new Image();
-      img.onerror = function () { reject(new Error("File bukan gambar yang valid.")); };
-      img.onload = function () {
-        var skala = Math.min(1, maxSisi / Math.max(img.width, img.height));
+    if (!file || !file.type || file.type.indexOf("image/") !== 0) {
+      reject(new Error("File yang dipilih bukan gambar. Pilih foto dari galeri."));
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      reject(new Error("Ukuran foto terlalu besar (maks. 15 MB). Coba ambil ulang atau pilih yang lebih kecil."));
+      return;
+    }
+
+    var selesai = false;
+    var timeout = setTimeout(function () {
+      if (!selesai) {
+        selesai = true;
+        reject(new Error("Waktu memproses foto habis. Coba pilih foto yang lebih kecil."));
+      }
+    }, 15000);
+
+    function prosesGambar(img) {
+      try {
+        var w = img.width || 1;
+        var h = img.height || 1;
+        var skala = Math.min(1, maxSisi / Math.max(w, h));
         var canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * skala);
-        canvas.height = Math.round(img.height * skala);
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.width = Math.max(1, Math.round(w * skala));
+        canvas.height = Math.max(1, Math.round(h * skala));
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         var dataUrl = canvas.toDataURL("image/jpeg", kualitas);
+        if (!dataUrl || dataUrl.length < 100) throw new Error("Gagal mengompres foto.");
+        selesai = true;
+        clearTimeout(timeout);
         resolve({ bytes: dataUrl.split(",")[1], type: "image/jpeg" });
+      } catch (err) {
+        selesai = true;
+        clearTimeout(timeout);
+        reject(new Error("Gagal memproses foto: " + (err.message || "unknown")));
+      }
+    }
+
+    // Cara utama (lebih cepat & stabil di HP)
+    try {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        prosesGambar(img);
       };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        bacaDenganFileReader();
+      };
+      img.src = url;
+    } catch (e) {
+      bacaDenganFileReader();
+    }
+
+    function bacaDenganFileReader() {
+      var reader = new FileReader();
+      reader.onerror = function () {
+        selesai = true;
+        clearTimeout(timeout);
+        reject(new Error("Gagal membaca file foto. Coba pilih foto lain atau ambil ulang dari kamera."));
+      };
+      reader.onload = function (e) {
+        var img2 = new Image();
+        img2.onload = function () { prosesGambar(img2); };
+        img2.onerror = function () {
+          selesai = true;
+          clearTimeout(timeout);
+          reject(new Error("File bukan gambar yang valid. Coba format JPG/PNG."));
+        };
+        img2.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   });
 }
 
@@ -458,7 +516,8 @@ function kirimIuran() {
   btn.disabled = true;
   btn.innerText = "Mengirim...";
 
-  kompresFoto(fileInput.files[0], 1280, 0.8)
+  // 1100px + kualitas 0.72 → file lebih kecil (upload lebih cepat) tapi tetap jelas terbaca
+  kompresFoto(fileInput.files[0], 1100, 0.72)
     .then(function (fileData) {
       return callApi("simpanIuran", { data: dataIuran, fileData: fileData });
     })
@@ -783,3 +842,4 @@ function logout() {
   document.getElementById("login-pin").value = "";
   pindahKe("login");
 }
+
