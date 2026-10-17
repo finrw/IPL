@@ -445,11 +445,13 @@ function kirimIuran() {
     return;
   }
 
+  // Cek di client: kalau sudah bayar bulan+tahun yang dipilih, langsung tolak
   var sudahAda = riwayatData.some(function (r) {
     return r.bulan.toLowerCase() === dataIuran.bulan.toLowerCase() && r.tahun === dataIuran.tahun;
   });
-  if (sudahAda && !confirm("Pembayaran " + dataIuran.bulan + " " + dataIuran.tahun +
-      " sudah tercatat. Tetap kirim lagi?")) {
+  if (sudahAda) {
+    alert("Anda sudah membayar iuran " + dataIuran.bulan + " " + dataIuran.tahun +
+          ".\nPembayaran ulang tidak diizinkan.\nPembayaran berikutnya bisa dilakukan untuk bulan berikutnya.");
     return;
   }
 
