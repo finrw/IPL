@@ -1,14 +1,278 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <!-- Meta -->
-        <meta charset="utf-8">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>IPL Warga </title>    
-  </head>
-  <body>
-<iframe src="https://script.google.com/macros/s/AKfycbzEHUQ3sluP1X4I9eE6XBblGYBXsiwGRz_dDSX7Z0X9xRFughP9LD3Qyf_r_ynaNWNq/exec" style="width: 100%; height: 90vh; border: none; overflow-y: auto;">  
-</iframe>
-  </body>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aplikasi IPL Warga</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <div id="banner-error" class="hidden no-print"></div>
+
+  <!-- === 1. LOGIN === -->
+  <div id="box-login" class="card">
+    <h3 class="title-primary">Login Iuran IPL Warga</h3>
+    <div class="field">
+      <label>Nama Pemilik Rumah</label>
+      <input type="text" id="login-nama" placeholder="Masukkan nama sesuai pendaftaran">
+    </div>
+    <div class="field">
+      <label>PIN Login (Angka)</label>
+      <div class="pin-wrap">
+        <input type="password" id="login-pin" inputmode="numeric" pattern="[0-9]*" placeholder="Masukkan PIN angka">
+        <button type="button" class="pin-toggle" onclick="togglePin('login-pin', this)">👁</button>
+      </div>
+    </div>
+    <button id="btn-login" onclick="login()" class="btn btn-primary">Masuk</button>
+    <p class="link">Belum mendaftarkan Iuran IPL rumah? <a onclick="pindahKe('signup')">Daftar di sini</a></p>
+    <p class="link">Lupa PIN? <a onclick="pindahKe('lupapin')">Klik di sini</a></p>
+    <p class="link-kecil"><a onclick="pindahKe('admin-login')">Masuk Pengurus</a></p>
+  </div>
+
+  <!-- === 2. DAFTAR === -->
+  <div id="box-signup" class="card hidden">
+    <h3 class="title-success">Pendaftaran Iuran IPL Rumah</h3>
+    <div class="field">
+      <label>Nama Pemilik Rumah</label>
+      <input type="text" id="reg-nama" placeholder="Contoh: Budi Santoso">
+    </div>
+    <div class="field">
+      <label>Blok &amp; Nomor Rumah</label>
+      <div class="rumah-row">
+        <div><span class="sub">Blok (huruf)</span>
+          <input type="text" id="reg-blok" maxlength="3" placeholder="C" autocapitalize="characters"
+                 oninput="sanitasiBlok(this); previewRumah('reg')"></div>
+        <div><span class="sub">No Blok</span>
+          <input type="text" id="reg-noblok" class="angka" maxlength="3" inputmode="numeric" placeholder="6"
+                 oninput="sanitasiAngka(this); previewRumah('reg')"></div>
+        <div><span class="sub">No Rumah</span>
+          <input type="text" id="reg-norumah" class="angka" maxlength="3" inputmode="numeric" placeholder="13"
+                 oninput="sanitasiAngka(this); previewRumah('reg')"></div>
+      </div>
+      <p class="muted">Kode rumah: <b id="reg-preview">-</b></p>
+    </div>
+    <div class="field">
+      <label>Nomor HP (WhatsApp) <span style="color:#dc2626">*</span></label>
+      <input type="tel" id="reg-hp" inputmode="numeric" placeholder="0812345xxxxx">
+      <p class="muted">Kuitansi pembayaran dikirim lewat WhatsApp.</p>
+    </div>
+    <div class="field">
+      <label>Email (opsional)</label>
+      <input type="text" id="reg-email" placeholder="contoh@email.com">
+    </div>
+    <div class="field">
+      <label>Buat PIN Keamanan (Angka)</label>
+      <div class="pin-wrap">
+        <input type="password" id="reg-pin" inputmode="numeric" pattern="[0-9]*" placeholder="Contoh: 123456">
+        <button type="button" class="pin-toggle" onclick="togglePin('reg-pin', this)">👁</button>
+      </div>
+    </div>
+    <p class="muted">Setelah mendaftar, Anda akan mendapat <b>Token Pemulihan</b>. Simpan baik-baik, token dipakai untuk membuat PIN baru jika Anda lupa PIN.</p>
+    <button id="btn-daftar" onclick="daftar()" class="btn btn-success">Daftar Akun</button>
+    <p class="link"><a onclick="pindahKe('login')">Kembali ke Login</a></p>
+  </div>
+
+  <!-- === 2B. LUPA PIN (pakai Token Pemulihan) === -->
+  <div id="box-lupapin" class="card hidden">
+    <h3 class="title-primary">🔑 Lupa PIN</h3>
+    <p class="muted">Masukkan Nama dan Token Pemulihan yang Anda dapat saat mendaftar, lalu buat PIN baru.</p>
+    <div class="field">
+      <label>Nama Pemilik Rumah</label>
+      <input type="text" id="lp-nama" placeholder="Masukkan nama sesuai pendaftaran">
+    </div>
+    <div class="field">
+      <label>Token Pemulihan</label>
+      <input type="text" id="lp-token" maxlength="9" autocapitalize="characters" autocomplete="off"
+             placeholder="XXXX-XXXX" oninput="this.value = this.value.toUpperCase()">
+    </div>
+    <div class="field">
+      <label>PIN Baru (Angka, min. 4 digit)</label>
+      <div class="pin-wrap">
+        <input type="password" id="lp-pin" inputmode="numeric" pattern="[0-9]*" placeholder="PIN baru">
+        <button type="button" class="pin-toggle" onclick="togglePin('lp-pin', this)">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Ulangi PIN Baru</label>
+      <input type="password" id="lp-pin2" inputmode="numeric" pattern="[0-9]*" placeholder="Ulangi PIN baru">
+    </div>
+    <button id="btn-lupapin" onclick="resetPinToken()" class="btn btn-primary">Buat PIN Baru</button>
+    <p class="link">Token hilang? <a onclick="waMintaResetPengurus()">Minta reset ke pengurus via WhatsApp</a></p>
+    <p class="link"><a onclick="pindahKe('login')">Kembali ke Login</a></p>
+  </div>
+
+  <!-- === 3. DASHBOARD WARGA === -->
+  <div id="box-dashboard" class="card hidden">
+    <h4>Halo, <span id="user-display" class="title-primary"></span>! 👋</h4>
+    <p class="muted">Rumah Anda: <span id="rumah-display" class="badge"></span></p>
+
+    <div id="notif-token" class="notif-token hidden">
+      ⚠️ Akun Anda belum punya <b>Token Pemulihan</b>. Buat sekarang agar bisa membuat PIN baru jika lupa PIN.
+      <button onclick="buatTokenBaru()" class="btn btn-primary">🔑 Buat Token Pemulihan</button>
+    </div>
+
+    <div class="tabs">
+      <button id="tab-bayar" class="tab active" onclick="gantiTab('bayar')">💰 Bayar</button>
+      <button id="tab-riwayat" class="tab" onclick="gantiTab('riwayat')">📋 Riwayat</button>
+    </div>
+
+    <!-- Panel Bayar -->
+    <div id="panel-bayar">
+      <h5>💰 Form Pembayaran Iuran IPL</h5>
+
+      <div class="field">
+        <label>Bulan Pembayaran</label>
+        <select id="form-bulan"></select>
+      </div>
+      <div class="field">
+        <label>Tahun</label>
+        <select id="form-tahun"></select>
+      </div>
+
+      <label style="margin-bottom:10px;">Pilih Komponen Iuran:</label>
+
+      <div class="checkbox-row">
+        <input type="checkbox" class="iuran-cb" value="23000" id="cb-keamanan" onchange="hitungTotal()" checked>
+        <label for="cb-keamanan">1. Keamanan — Rp 23.000</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="iuran-cb" value="12000" id="cb-sampah" onchange="hitungTotal()" checked>
+        <label for="cb-sampah">2. Sampah — Rp 12.000</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="iuran-cb" value="1000" id="cb-dakem" onchange="hitungTotal()" checked>
+        <label for="cb-dakem">3. Dana Kematian — Rp 1.000</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="iuran-cb" value="1000" id="cb-rw" onchange="hitungTotal()" checked>
+        <label for="cb-rw">4. Kas RW016 — Rp 1.000</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" class="iuran-cb" value="8000" id="cb-rt" onchange="hitungTotal()" checked>
+        <label for="cb-rt">5. Kas RT — Rp 8.000</label>
+      </div>
+      <div class="checkbox-row optional">
+        <input type="checkbox" class="iuran-cb" value="40000" id="cb-thr" onchange="hitungTotal()">
+        <label for="cb-thr">6. Iuran THR (Opsional / 1 Thn Sekali) — Rp 40.000</label>
+      </div>
+
+      <div class="total-box">
+        <span class="muted">Total yang Harus Dibayar:</span>
+        <h3>Rp <span id="total-display">45.000</span></h3>
+      </div>
+
+      <div class="field">
+        <label>Upload Bukti Transfer (Foto)</label>
+        <input type="file" id="form-bukti" accept="image/*">
+      </div>
+
+      <button id="btn-kirim" onclick="kirimIuran()" class="btn btn-primary">Kirim Pembayaran</button>
+    </div>
+
+    <!-- Panel Riwayat -->
+    <div id="panel-riwayat" class="hidden">
+      <h5>📋 Riwayat Pembayaran</h5>
+      <div class="field">
+        <label>Tahun</label>
+        <select id="riwayat-tahun" onchange="renderRiwayat()"></select>
+      </div>
+      <div id="riwayat-chips" class="chips"></div>
+      <div id="riwayat-list"></div>
+    </div>
+
+    <p class="link-kecil"><a onclick="buatTokenBaru()">Buat ulang Token Pemulihan</a></p>
+    <button onclick="logout()" class="btn btn-outline-danger">Keluar / Log Out</button>
+  </div>
+
+  <!-- === 3B. TOKEN PEMULIHAN === -->
+  <div id="box-token" class="card hidden">
+    <h3 class="title-success" id="token-judul">✅ Token Pemulihan</h3>
+    <p class="muted" id="token-info"></p>
+    <div class="token-box" id="token-tampil">----</div>
+    <div class="peringatan">⚠️ Simpan token ini baik-baik (screenshot / catat / kirim ke WhatsApp Anda). Token dipakai untuk membuat PIN baru jika lupa PIN, dan hanya ditampilkan <b>sekali</b> ini.</div>
+    <button onclick="salinToken()" class="btn btn-secondary">📋 Salin Token</button>
+    <button onclick="kirimTokenWaSaya()" class="btn btn-success">💬 Kirim ke WhatsApp Saya</button>
+    <div class="checkbox-row">
+      <input type="checkbox" id="token-sudah" onchange="cekTokenSudah()">
+      <label for="token-sudah">Saya sudah menyimpan token ini</label>
+    </div>
+    <button id="btn-token-lanjut" onclick="selesaiToken()" class="btn btn-primary" disabled>Lanjut</button>
+  </div>
+
+  <!-- === 4. KUITANSI === -->
+  <div id="box-kuitansi" class="card hidden">
+    <div id="kuitansi-isi" class="kuitansi"></div>
+    <button onclick="kirimWaBendahara()" class="btn btn-success no-print" style="margin-top:16px;">📲 Kirim ke Bendahara via WhatsApp</button>
+    <button onclick="kirimWaSaya()" class="btn btn-primary no-print">💬 Simpan di WhatsApp Saya</button>
+    <button onclick="window.print()" class="btn btn-secondary no-print">🖨️ Cetak / Simpan PDF</button>
+    <button onclick="pindahKe('dashboard')" class="btn btn-secondary no-print">Kembali</button>
+  </div>
+
+  <!-- === 5. LOGIN PENGURUS === -->
+  <div id="box-admin-login" class="card hidden">
+    <h3 class="title-primary">🛡️ Masuk Pengurus</h3>
+    <div class="field">
+      <label>PIN Pengurus</label>
+      <div class="pin-wrap">
+        <input type="password" id="admin-pin" inputmode="numeric" placeholder="Masukkan PIN pengurus">
+        <button type="button" class="pin-toggle" onclick="togglePin('admin-pin', this)">👁</button>
+      </div>
+    </div>
+    <button id="btn-admin" onclick="loginPengurus()" class="btn btn-primary">Masuk</button>
+    <p class="link"><a onclick="pindahKe('login')">Kembali ke Login Warga</a></p>
+  </div>
+
+  <!-- === 6. HALAMAN PENGURUS === -->
+  <div id="box-admin" class="card hidden">
+    <h3 class="title-primary">🛡️ Halaman Pengurus</h3>
+
+    <div class="tabs">
+      <button id="admin-tab-rekap" class="tab active" onclick="gantiTabAdmin('rekap')">📊 Rekap</button>
+      <button id="admin-tab-reset" class="tab" onclick="gantiTabAdmin('reset')">🔑 Reset PIN</button>
+    </div>
+
+    <div id="panel-rekap">
+      <div class="field">
+        <label>Bulan</label>
+        <select id="rekap-bulan"></select>
+      </div>
+      <div class="field">
+        <label>Tahun</label>
+        <select id="rekap-tahun"></select>
+      </div>
+      <button id="btn-rekap" onclick="muatRekap()" class="btn btn-primary">Tampilkan Rekap</button>
+      <div id="rekap-hasil"></div>
+    </div>
+
+    <div id="panel-reset" class="hidden">
+      <p class="muted">Untuk warga yang kehilangan token. PIN dan token lama akan hangus, lalu dibuat PIN sementara &amp; token baru yang bisa dikirim lewat WhatsApp ke nomor warga yang terdaftar.</p>
+      <div class="field">
+        <label>Blok &amp; Nomor Rumah Warga</label>
+        <div class="rumah-row">
+          <div><span class="sub">Blok (huruf)</span>
+            <input type="text" id="rs-blok" maxlength="3" placeholder="C" autocapitalize="characters"
+                   oninput="sanitasiBlok(this); previewRumah('rs')"></div>
+          <div><span class="sub">No Blok</span>
+            <input type="text" id="rs-noblok" class="angka" maxlength="3" inputmode="numeric" placeholder="6"
+                   oninput="sanitasiAngka(this); previewRumah('rs')"></div>
+          <div><span class="sub">No Rumah</span>
+            <input type="text" id="rs-norumah" class="angka" maxlength="3" inputmode="numeric" placeholder="13"
+                   oninput="sanitasiAngka(this); previewRumah('rs')"></div>
+        </div>
+        <p class="muted">Kode rumah: <b id="rs-preview">-</b></p>
+      </div>
+      <button id="btn-reset-warga" onclick="resetPengurusWarga()" class="btn btn-primary">Reset PIN &amp; Token</button>
+      <div id="reset-hasil"></div>
+    </div>
+
+    <button onclick="logoutPengurus()" class="btn btn-outline-danger">Keluar Pengurus</button>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
 </html>
