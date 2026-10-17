@@ -93,7 +93,11 @@
     width: auto;
     margin: 0;
     color: #64748b;
+    display: flex;
+    align-items: center;
+    line-height: 0;
   }
+  .pin-toggle svg { display: block; }
   #banner-error {
     background: #fee2e2;
     color: #991b1b;
@@ -173,3 +177,4 @@
   border-radius: 10px; padding: 12px; font-size: 13px; margin: 12px 0;
 }
 .notif-token .btn { margin: 8px 0 0; }
+
